@@ -5,10 +5,12 @@ import socketserver
 import json
 import importlib
 import subprocess
+
 from urllib.parse import unquote
 
 from transformers import pipeline
-#from playsound import playsound
+
+from pathlib import Path
 
 
 
@@ -57,15 +59,28 @@ RECORD_FILE_PATH = "files/tts_read.wav"
 ELEVENLABS_API = "https://api.elevenlabs.io/"
 SCRIPT_OK = True
 
-#playsound('F://Note_disk_02_24/pr_1/VAM_1/TextAudioTool-0.4/SPQR.TextAudioTool/files//tts_output.wav')
-#playsound('files//tts_output.wav')
-#torch.compiler.disable
+#if the preference file does not exists create a new one
+my_file = Path("TextAudioToolPref2.json")
+if my_file.is_file():
+    print("preference file already exists")
+else:
+    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"true"}' #default preference file content 
+    xxx = json.loads(xx)
+    print("creating new preference file")
+    with open('TextAudioToolPref.json', 'w') as f:
+     json.dump(xxx, f)
 
-#classifier = pipeline("text-classification", model="michellejieli/emotion_text_classifier")
-#classifier = pipeline("text-classification", model="fyaronskiy/ModernBERT-large-go-emotions")
-#classifier = pipeline("text-classification", model="jitesh/emotion-english")
-classifier = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions")
+# indicating the content of the preference file
+with open('TextAudioToolPref.json') as json_file:
+    d = json.load(json_file)
+    print("")
+    print("Emotion classification model = ", d["EmoClasModel"])
+    print("Emotion  classification  ", d["EmoClasOn"])
+    print("Voicing  text ", d["RespSoundOn"])
+    print("")
 
+
+classifier = pipeline("text-classification", model=d["EmoClasModel"])
 
 
 class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
@@ -81,15 +96,14 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             print("Received text to speak ...")
             #print(text)
 
-            res = classifier(text)
-            #print(text, ": ", res)
+            #performing the text classifiation 
+            res = ""
+            if d["EmoClasOn"] == "true":
+             res = classifier(text)
+             res = res[0]
+             res = res['label']
+             print(text, ": ", res)
             
-            #res1 = json.loads(res.decode('utf-8'))
-            res = res[0]
-            res = res['label']
-            #data1 = json.loads(res.decode('utf-8'))
-            print(text, ": ", res)
-
             selected_voice = ""
             default_voice = ""
             
@@ -112,10 +126,12 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
                 output_path  = data['output']
             engine.save_to_file(text , output_path)
             engine.runAndWait()
-            #playsound('files//tts_output.wav')
 
-            engine.say(text)
-            engine.runAndWait()
+
+            # vocing the text   
+            if d["RespSoundOn"] == "true":
+             engine.say(text)
+             engine.runAndWait()
 
             # Send a response
             self.send_response(200)
@@ -128,8 +144,7 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             }
             self.wfile.write(json.dumps(response).encode('utf-8'))
 
-            #playsound('files//tts_output.wav')
-            
+         
 
         elif self.path.startswith('/speakelevenlabs'):
             content_length = int(self.headers['Content-Length'])
