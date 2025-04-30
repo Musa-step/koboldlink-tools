@@ -60,7 +60,7 @@ ELEVENLABS_API = "https://api.elevenlabs.io/"
 SCRIPT_OK = True
 
 #if the preference file does not exists create a new one
-my_file = Path("TextAudioToolPref2.json")
+my_file = Path("TextAudioToolPref.json")
 if my_file.is_file():
     print("preference file already exists")
 else:
