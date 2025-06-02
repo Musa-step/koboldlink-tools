@@ -64,7 +64,7 @@ if my_file.is_file():
     print("preference file already exists")
 else:
     #default preference file content 
-    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"false", "HordeModel":"koboldcpp/L3-8B-Lunaris-v1", "apikey":"xxxxxxxxxxx_xxxxxxxxx"}'
+    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"false", "HordeModel":"koboldcpp/L3-8B-Lunaris-v1", "apikey":"0000000000"}'
     xxx = json.loads(xx)
     print("creating new preference file")
     with open('TextAudioToolPref.json', 'w') as f:
