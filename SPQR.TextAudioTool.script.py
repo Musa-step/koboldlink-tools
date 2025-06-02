@@ -5,6 +5,8 @@ import socketserver
 import json
 import importlib
 import subprocess
+import requests
+import time
 
 from urllib.parse import unquote
 
@@ -12,21 +14,18 @@ from transformers import pipeline
 
 from pathlib import Path
 
-
-
-
-print("------------------------------------------------------------------------------")
-print("                                                                              ")
-print("                 .M\"\"\"bgd `7MM\"\"\"Mq.   .g8\"\"8q. `7MM\"\"\"Mq.         ")
-print("                ,MI    \"Y   MM   `MM..dP'    `YM. MM   `MM.                  ")
-print("                `MMb.       MM   ,M9 dM'      `MM MM   ,M9                    ")
-print("                  `YMMNq.   MMmmdM9  MM        MM MMmmdM9                     ")
-print("                .     `MM   MM       MM.      ,MP MM  YM.                     ")
-print("                Mb     dM   MM       `Mb.    ,dP' MM   `Mb.                   ")
-print("                P\"Ybmmd\"  .JMML.       `\"bmmd\"' .JMML. .JMM.              ")
-print("                                           MMb                                ")
-print("                                            `Ybm9'                            ")
-print("==============================================================================")
+#print("------------------------------------------------------------------------------")
+#print("                                                                              ")
+#print("                 .M\"\"\"bgd `7MM\"\"\"Mq.   .g8\"\"8q. `7MM\"\"\"Mq.         ")
+#print("                ,MI    \"Y   MM   `MM..dP'    `YM. MM   `MM.                  ")
+#print("                `MMb.       MM   ,M9 dM'      `MM MM   ,M9                    ")
+#print("                  `YMMNq.   MMmmdM9  MM        MM MMmmdM9                     ")
+#print("                .     `MM   MM       MM.      ,MP MM  YM.                     ")
+#print("                Mb     dM   MM       `Mb.    ,dP' MM   `Mb.                   ")
+#print("                P\"Ybmmd\"  .JMML.       `\"bmmd\"' .JMML. .JMM.              ")
+#print("                                           MMb                                ")
+#print("                                            `Ybm9'                            ")
+#print("==============================================================================")
 
 
 print("  _____ _______  _______      _   _   _ ____ ___ ___    _____ ___   ___  _     ")
@@ -35,7 +34,8 @@ print("   | | |  _|  \  /  | |     / _ \| | | | | | | | | | |   | || | | | | | |
 print("   | | | |___ /  \  | |    / ___ \ |_| | |_| | | |_| |   | || |_| | |_| | |___ ")
 print("   |_| |_____/_/\_\ |_|   /_/   \_\___/|____/___\___/    |_| \___/ \___/|_____|")
 print("                                                                               ")
-
+print("KoboldLinkTools fork: ver. 1.0.0")
+print("Credits: SPQR" + "  " + "patreon.com/spqr_aeternum")
 
 print("------------------------------------------------------------------------------")
 print("    AVAILABLE ENDPOINTS:")
@@ -50,10 +50,9 @@ print("    127.0.0.1:7069/modelselevenlabs GET - gets elevenlabs available AI mo
 print("    127.0.0.1:7069/voiceselevenlabs GET - gets elevenlabs available voices")
 print("    More details and endpoint tests in demo/demo.html")
 print("------------------------------------------------------------------------------")
-print("    Help me make more cool stuff at: patreon.com/spqr_aeternum")
+print("    127.0.0.1:7069/horde_generate POST - AI Horde proxy for KoboldLink")
+#print("    Help me make more cool stuff at: patreon.com/spqr_aeternum")
 print("==============================================================================")
-
-
 
 RECORD_FILE_PATH = "files/tts_read.wav"
 ELEVENLABS_API = "https://api.elevenlabs.io/"
@@ -64,7 +63,8 @@ my_file = Path("TextAudioToolPref.json")
 if my_file.is_file():
     print("preference file already exists")
 else:
-    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"true"}' #default preference file content 
+    #default preference file content 
+    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"false", "HordeModel":"koboldcpp/L3-8B-Lunaris-v1", "apikey":"xxxxxxxxxxx_xxxxxxxxx"}'
     xxx = json.loads(xx)
     print("creating new preference file")
     with open('TextAudioToolPref.json', 'w') as f:
@@ -77,10 +77,25 @@ with open('TextAudioToolPref.json') as json_file:
     print("Emotion classification model = ", d["EmoClasModel"])
     print("Emotion  classification  ", d["EmoClasOn"])
     print("Voicing  text ", d["RespSoundOn"])
+    print("Horde  model ", d["HordeModel"])
     print("")
 
-
+#assigning the text classification model
 classifier = pipeline("text-classification", model=d["EmoClasModel"])
+
+key1 = d["apikey"]
+#print(key1)
+
+
+memory0 = "You play a role of a chinese dancer girl with pale skin and a nice figure. You are in a dialog with user."
+prompt0 = "How are you recently?"
+stop_seq= ["### Instruction:", "### Response:"]
+print("stop sequence:")
+print(stop_seq)
+
+url1 = 'http://localhost:5001//api/v1/generate'
+#url2 = 'https://aihorde.net/api/v2/status/models'
+url2 = 'https://aihorde.net/api/v2/generate/text/async'
 
 
 class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
@@ -91,7 +106,7 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
         if self.path == '/speak':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
-            data = json.loads(post_data.decode('utf-8'))
+            data = json.loads(post_data.decode('utf-8'), strict=False)
             text = data['message']
             print("Received text to speak ...")
             #print(text)
@@ -143,9 +158,147 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
                 "sentiment": res
             }
             self.wfile.write(json.dumps(response).encode('utf-8'))
-
          
+        # http://127.0.0.1:7069/generate
+        elif self.path == '/generate':
+           #print("test generate POST")
+           content_length1 = int(self.headers['Content-Length'])
+           post_data1 = self.rfile.read(content_length1)
+           data1 = json.loads(post_data1.decode('utf-8'), strict=False)
+           prompt1 = data1['prompt']
+           memory1 = data1['memory']
 
+           myobj1 = {
+           "max_context_length": 2048,
+           "max_length": 100,
+           "memory": memory1,
+           "prompt": prompt1,
+           "quiet": "true",
+           "stop_sequence": stop_seq,
+           "rep_pen": 1.1,
+           "rep_pen_range": 256,
+           "rep_pen_slope": 1,
+           "temperature": 0.5,
+           "tfs": 1,
+           "top_a": 0,
+           "top_k": 100,
+           "top_p": 0.9,
+           "typical": 1
+           }
+
+           x48= requests.post(url1, json = myobj1)
+
+           if x48.status_code == 200:
+             results48 = x48.json()['results']
+             #print(results48)
+             text48 = results48[0]['text']
+             print(text48)
+
+             self.send_response(x48.status_code)
+             self.send_header('Content-Type', 'application/json')
+             self.end_headers()
+             self.wfile.write(json.dumps(x48.json()).encode('utf-8'))
+
+        # http://127.0.0.1:7069/horde_generate
+        elif self.path == '/horde_generate':
+           #print("test horde_generate POST")
+
+           content_length1 = int(self.headers['Content-Length'])
+           post_data1 = self.rfile.read(content_length1)
+           data1 = json.loads(post_data1.decode('utf-8'), strict=False)
+           #prompt1 = data1['prompt']
+           #memory1 = data1['memory']
+
+           print("prompt: "+ data1['memory'] + "\n" + data1['prompt'])
+
+           payload1 = {
+           "prompt": data1['memory'] + "\n" + data1['prompt'],
+           "params": {
+            "can_abort": False,
+            "frmtadsnsp": False,
+            "frmtrmblln": True, # Output formatting option. When enabled, replaces all occurrences of two or more consecutive newlines in the output with one newline.
+            "frmtrmspch": True, # Output formatting option. When enabled, removes #/@%}{+=~|^<> from the output. 
+            "frmttriminc": True, # Output formatting option. When enabled, removes some characters from the end of the output such that the output doesn't end in the middle of a sentence. If the output is less than one sentence long, does nothing.
+            "grammar": "",
+            "gui_settings": False,
+            "max_context_length": data1['max_context_length'], # Maximum number of tokens to send to the model.
+            "max_length": data1['max_length'], # Number of tokens to generate.
+            "min_p": 0,
+            "mirostat": 0,
+            "mirostat_eta": 0.1,
+            "mirostat_tau": 5,
+            "n": 1,
+            "rep_pen": 1.1,
+            "rep_pen_range": 600,
+            "rep_pen_slope": 0,
+            "sampler_order": [
+             6, 0, 1, 2, 3, 4, 5
+             ],
+            "sampler_seed": "undefined",
+            "use_default_badwordsids": True,
+            "singleline": False,
+            "stop_sequence": stop_seq, # An array of string sequences whereby the model will stop generating further tokens. The returned text WILL contain the stop sequence.
+            "streaming": False,
+            "temperature": 1,
+            "tfs": 1,
+            "top_a": 0,
+            "top_k": 0,
+            "top_p": 0.95,
+            "typical": 1,
+            "use_default_badwordsids": False,
+            "use_world_info": False
+             },
+            "models": [ d["HordeModel"] ],
+            "trusted_workers": False
+            }
+           #sending horde async request    
+           print('sending horde request')
+           headers1 = {"apikey": key1, "Content-Type": "application/json"}
+
+           try:
+            x46 = requests.post(url2, data = json.dumps(payload1), headers = headers1)
+            results000 = x46.json()
+           except requests.exceptions.RequestException as e:
+                print("Error making AI Horde_API POST request:", e)
+  
+           #if Horde request is succesful
+           if x46.status_code == 202:
+            id46 = results000['id']
+            print("Horde request id: " + id46)
+            url47 = "https://aihorde.net/api/v2/generate/text/status/" + id46
+            headers47 = {"Content-Type": "application/json"}
+            #print(url47)
+            x47 = requests.get(url47, headers = headers47)
+
+           #periodically checking the status of the Horde request with some delay
+           finish_flag = 0
+           counter1 = 0
+           while finish_flag == 0:
+            print("processing request not finished. trying to check status after 5 s...")
+            time.sleep(5.0)
+            x47 = requests.get(url47, headers = headers47)
+            #print(x47)
+            #print(x47.status_code)
+            results000 = x47.json()
+            #print(results000)
+            finish_flag = results000['finished']
+            counter1 = counter1 + 1
+            print("counter:" + str(counter1))
+           #if the requset processing is finished   
+           if finish_flag == 1:
+            results000 = results000['generations']
+            #print(results000)
+            results000 = results000[0]['text']
+            print("AI respose: " + results000)
+
+           self.send_response(x47.status_code)
+           self.send_header('Content-Type', 'application/json')
+           self.end_headers()
+           self.wfile.write(json.dumps(x47.json()).encode('utf-8'))
+
+           print(x47.json())
+
+      
         elif self.path.startswith('/speakelevenlabs'):
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
