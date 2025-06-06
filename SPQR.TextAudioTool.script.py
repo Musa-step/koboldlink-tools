@@ -264,7 +264,7 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
            #if Horde request is succesful
            if x46.status_code == 202:
             id46 = results000['id']
-            print("Horde request id: " + id46)
+            print(results000)
             url47 = "https://aihorde.net/api/v2/generate/text/status/" + id46
             headers47 = {"Content-Type": "application/json"}
             #print(url47)
