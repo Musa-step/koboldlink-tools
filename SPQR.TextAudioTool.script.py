@@ -14,27 +14,13 @@ from transformers import pipeline
 
 from pathlib import Path
 
-#print("------------------------------------------------------------------------------")
-#print("                                                                              ")
-#print("                 .M\"\"\"bgd `7MM\"\"\"Mq.   .g8\"\"8q. `7MM\"\"\"Mq.         ")
-#print("                ,MI    \"Y   MM   `MM..dP'    `YM. MM   `MM.                  ")
-#print("                `MMb.       MM   ,M9 dM'      `MM MM   ,M9                    ")
-#print("                  `YMMNq.   MMmmdM9  MM        MM MMmmdM9                     ")
-#print("                .     `MM   MM       MM.      ,MP MM  YM.                     ")
-#print("                Mb     dM   MM       `Mb.    ,dP' MM   `Mb.                   ")
-#print("                P\"Ybmmd\"  .JMML.       `\"bmmd\"' .JMML. .JMM.              ")
-#print("                                           MMb                                ")
-#print("                                            `Ybm9'                            ")
-#print("==============================================================================")
-
-
 print("  _____ _______  _______      _   _   _ ____ ___ ___    _____ ___   ___  _     ")
 print(" |_   _| ____\ \/ /_   _|    / \ | | | |  _ \_ _/ _ \  |_   _/ _ \ / _ \| |    ")
 print("   | | |  _|  \  /  | |     / _ \| | | | | | | | | | |   | || | | | | | | |    ")
 print("   | | | |___ /  \  | |    / ___ \ |_| | |_| | | |_| |   | || |_| | |_| | |___ ")
 print("   |_| |_____/_/\_\ |_|   /_/   \_\___/|____/___\___/    |_| \___/ \___/|_____|")
 print("                                                                               ")
-print("KoboldLinkTools fork: ver. 1.0.0")
+print("KoboldLinkTools fork: ver. 1.0.1")
 print("Credits: SPQR" + "  " + "patreon.com/spqr_aeternum")
 
 print("------------------------------------------------------------------------------")
@@ -51,6 +37,7 @@ print("    127.0.0.1:7069/voiceselevenlabs GET - gets elevenlabs available voice
 print("    More details and endpoint tests in demo/demo.html")
 print("------------------------------------------------------------------------------")
 print("    127.0.0.1:7069/horde_generate POST - AI Horde proxy for KoboldLink")
+print("    127.0.0.1:7069/classify POST - Sentiment classification")
 #print("    Help me make more cool stuff at: patreon.com/spqr_aeternum")
 print("==============================================================================")
 
@@ -103,6 +90,7 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         super().end_headers()
     def do_POST(self):
+        # http://127.0.0.1:7069/speak
         if self.path == '/speak':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
@@ -142,7 +130,6 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             engine.save_to_file(text , output_path)
             engine.runAndWait()
 
-
             # vocing the text   
             if d["RespSoundOn"] == "true":
              engine.say(text)
@@ -155,6 +142,33 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             response = {
                 "status": "done",
                 "saved": output_path,
+                "sentiment": res
+            }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+
+        # http://127.0.0.1:7069/classify
+        if self.path == '/classify':
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'), strict=False)
+            text = data['message']
+            print("Received text to classify ...")
+
+            #performing the text classifiation 
+            res = ""
+            if d["EmoClasOn"] == "true":
+             res = classifier(text)
+             res = res[0]
+             res = res['label']
+             print(text, ": ", res)
+
+            # Send a response
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            response = {
+                "status": "done",
+            #   "saved": output_path,
                 "sentiment": res
             }
             self.wfile.write(json.dumps(response).encode('utf-8'))
@@ -265,6 +279,11 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
            if x46.status_code == 202:
             id46 = results000['id']
             print(results000)
+            #if the Horde sends a 'message' in its json-response, something went wrong and the request needs to be cancelled
+            if "message" in results000:
+              print(results000['message'])
+              return
+            #print("Horde request id: " + id46)
             url47 = "https://aihorde.net/api/v2/generate/text/status/" + id46
             headers47 = {"Content-Type": "application/json"}
             #print(url47)
