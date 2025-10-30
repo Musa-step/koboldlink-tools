@@ -46,3 +46,4 @@ function pretty(s){
 	s = s.replaceAll('","','"<span class="pretty-comma">,</span>"');
 	return s;
 }
+
