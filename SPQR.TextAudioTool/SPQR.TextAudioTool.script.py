@@ -20,7 +20,7 @@ print("   | | |  _|  \  /  | |     / _ \| | | | | | | | | | |   | || | | | | | |
 print("   | | | |___ /  \  | |    / ___ \ |_| | |_| | | |_| |   | || |_| | |_| | |___ ")
 print("   |_| |_____/_/\_\ |_|   /_/   \_\___/|____/___\___/    |_| \___/ \___/|_____|")
 print("                                                                               ")
-print("KoboldLinkTools fork: ver. 1.0.1")
+print("KoboldLinkTools fork: ver. 1.0.2")
 print("Credits: SPQR" + "  " + "patreon.com/spqr_aeternum")
 
 print("------------------------------------------------------------------------------")
@@ -51,7 +51,7 @@ if my_file.is_file():
     print("preference file already exists")
 else:
     #default preference file content 
-    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"false", "HordeModel":"koboldcpp/L3-8B-Lunaris-v1", "apikey":"0000000000"}'
+    xx = '{ "EmoClasModel":"SamLowe/roberta-base-go_emotions", "EmoClasOn":"true", "RespSoundOn":"false", "HordeModel":"koboldcpp/L3-8B-Lunaris-v1", "HordeModel_funccall":"koboldcpp/L3-8B-Lunaris-v1", "apikey":"0000000000"}'
     xxx = json.loads(xx)
     print("creating new preference file")
     with open('TextAudioToolPref.json', 'w') as f:
@@ -64,8 +64,10 @@ with open('TextAudioToolPref.json') as json_file:
     print("Emotion classification model = ", d["EmoClasModel"])
     print("Emotion  classification  ", d["EmoClasOn"])
     print("Voicing  text ", d["RespSoundOn"])
-    print("Horde  model ", d["HordeModel"])
+    print("Horde  model (chat)", d["HordeModel"])
+    print("Horde  model (function call)", d["HordeModel_funccall"])
     print("")
+
 
 #assigning the text classification model
 classifier = pipeline("text-classification", model=d["EmoClasModel"])
@@ -220,8 +222,14 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
            content_length1 = int(self.headers['Content-Length'])
            post_data1 = self.rfile.read(content_length1)
            data1 = json.loads(post_data1.decode('utf-8'), strict=False)
-           #prompt1 = data1['prompt']
-           #memory1 = data1['memory']
+           model1 = d["HordeModel"]
+
+        # if request body contains "'function_calling' == true" switch the model to one set for instuction mode
+           if 'function_calling' in data1:
+             if data1['function_calling'] == "true":
+               print("fuction calling request")
+               model1 = d["HordeModel_funccall"]
+
 
            print("prompt: "+ data1['memory'] + "\n" + data1['prompt'])
 
@@ -262,7 +270,7 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             "use_default_badwordsids": False,
             "use_world_info": False
              },
-            "models": [ d["HordeModel"] ],
+            "models": [ model1 ],
             "trusted_workers": False
             }
            #sending horde async request    
