@@ -4,7 +4,7 @@ This repository is a Fork of the SPQR.TextAudioTool v0.4. In addition to its ori
 2) This tool can also work as a proxy for the AI Horde for use with KoboldLink. For this purpose endpoint 127.0.0.1:7069/horde_generate is added. Please use KoboldLink version 11 or higher. Enter "http://127.0.0.1:7069/horde_generate" in the text box "KoboldAI URL" to use this proxy. Edit TextAudioToolPref.json to enter your apikey and the model name to use when connecting to the Horde.
 To get a list of models currently active in the horde, use the aihorde.net/api/v2/status/models endpoint with the "text" parameter and check the response body. If you are using a browser, you can check it using the following link: https://aihorde.net/api/v2/status/models?type=text&model_state=all. If you have no API key you can get it here https://aihorde.net/
 
-For processing primary chat requests and functioncalling requests (available in Koboldlink v17 and higher) from KoboldLink, you can select different LLMs in TextAudioToolPref.json file that best suit these two different tasks (parametes "Horde  model (chat)" and "Horde  model (function call)", correspondingly).
+For processing primary chat requests and function-calling requests (available in Koboldlink v17 and higher) from KoboldLink, you can select different LLMs in TextAudioToolPref.json file that best suit these two different tasks (parameters "Horde  model (chat)" and "Horde  model (function call)", correspondingly).
 
 # installation
 It is recommended to install SPQR.TextAudioTool v0.4 first. Then replace the original SPQR.TextAudioTool.bat and SPQR.TextAudioTool.script.py files from the .../SPQR.TextAudioTool directory with the updated ones from this repository.
