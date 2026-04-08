@@ -7,5 +7,8 @@ To get a list of models currently active in the horde, use the aihorde.net/api/v
 For processing primary chat requests and function-calling requests (available in Koboldlink v17 and higher) from KoboldLink, you can select different LLMs in TextAudioToolPref.json file that best suit these two different tasks (parameters "Horde  model (chat)" and "Horde  model (function call)", correspondingly).
 
 # installation
-It is recommended to install SPQR.TextAudioTool v0.4 first. Then replace the original SPQR.TextAudioTool.bat and SPQR.TextAudioTool.script.py files from the .../SPQR.TextAudioTool directory with the updated ones from this repository.
-Alternatively, if you don't have SPQR.TextAudioTool v0.4 installed, unzip the contents to the target directory and run "SPQR.TextAudioTool - (standalone).bat" or "SPQR.TextAudioTool/SPQR.TextAudioTool.bat" (the first time you run it, the installation of the necessary packages will begin; Python and ffmpeg must be installed on PC).
+There are two ways:
+1) If you already have SPQR.TextAudioTool v0.4 installed, replace the original SPQR.TextAudioTool.bat and SPQR.TextAudioTool.script.py files from the .../SPQR.TextAudioTool directory with the updated ones from this repository.
+2) If you don't have SPQR.TextAudioTool v0.4 installed, unzip the contents to the target directory (it should be inside the VaM directory) and run "SPQR.TextAudioTool - (standalone).bat" or "SPQR.TextAudioTool/SPQR.TextAudioTool.bat" (the first time you run it, the installation of the necessary packages will begin).
+Correct the “AudiofilePath” parameter of KoboldLink as “[installation directory]/SPQR.TextAudioTool/files/” (necessary of you use TTS).
+Note that Python and ffmpeg must also be installed on your PC before installing this tool.
