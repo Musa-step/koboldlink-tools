@@ -11,6 +11,6 @@ There are two ways:
 1) If you already have SPQR.TextAudioTool v0.4 installed, replace the original SPQR.TextAudioTool.bat and SPQR.TextAudioTool.script.py files from the .../SPQR.TextAudioTool directory with the updated ones from this repository.
 2) If you don't have SPQR.TextAudioTool v0.4 installed, unzip the contents to the target directory (it should be inside the VaM directory) and run "SPQR.TextAudioTool - (standalone).bat" or "SPQR.TextAudioTool/SPQR.TextAudioTool.bat" (the first time you run it, the installation of the necessary packages will begin).
 
-Correct the “AudiofilePath” parameter of KoboldLink as “[installation directory]/SPQR.TextAudioTool/files/” (necessary of you use TTS).
+Correct the “AudiofilePath” parameter of KoboldLink as “[installation directory]/SPQR.TextAudioTool/files/” (necessary if you use TTS).
 
 Note that Python and ffmpeg must also be installed on your PC before installing this tool.
