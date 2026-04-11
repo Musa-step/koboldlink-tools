@@ -38,6 +38,7 @@ print("    More details and endpoint tests in demo/demo.html")
 print("------------------------------------------------------------------------------")
 print("    127.0.0.1:7069/horde_generate POST - AI Horde proxy for KoboldLink")
 print("    127.0.0.1:7069/classify POST - Sentiment classification")
+print("    127.0.0.1:7069/horde_model_status GET - Get status of AI Horde text models")
 #print("    Help me make more cool stuff at: patreon.com/spqr_aeternum")
 print("==============================================================================")
 
@@ -83,8 +84,10 @@ print("stop sequence:")
 print(stop_seq)
 
 url1 = 'http://localhost:5001//api/v1/generate'
-#url2 = 'https://aihorde.net/api/v2/status/models'
+
 url2 = 'https://aihorde.net/api/v2/generate/text/async'
+
+url3 = 'https://aihorde.net/api/v2/status/models'
 
 
 class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
@@ -250,9 +253,9 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             "mirostat_eta": 0.1,
             "mirostat_tau": 5,
             "n": 1,
-            "rep_pen": 1.1,
-            "rep_pen_range": 600,
-            "rep_pen_slope": 0,
+            "rep_pen": data1['rep_pen'],
+            "rep_pen_range": data1['rep_pen_range'],
+            "rep_pen_slope": data1['rep_pen_slope'],
             "sampler_order": [
              6, 0, 1, 2, 3, 4, 5
              ],
@@ -261,12 +264,12 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             "singleline": False,
             "stop_sequence": stop_seq, # An array of string sequences whereby the model will stop generating further tokens. The returned text WILL contain the stop sequence.
             "streaming": False,
-            "temperature": 1,
-            "tfs": 1,
-            "top_a": 0,
-            "top_k": 0,
-            "top_p": 0.95,
-            "typical": 1,
+            "temperature": data1['temperature'],
+            "tfs": data1['tfs'],
+            "top_a": data1['top_a'],
+            "top_k": data1['top_k'],
+            "top_p": data1['top_p'],
+            "typical": data1['typical'],
             "use_default_badwordsids": False,
             "use_world_info": False
              },
@@ -376,6 +379,32 @@ class SPQRTTSHandler(http.server.BaseHTTPRequestHandler):
             for voice in voices:
                response[voice.id.split("\\")[-1]] = voice.name
             self.wfile.write(json.dumps(response).encode('utf-8'))
+
+        # http://127.0.0.1:7069/horde_model_status
+        elif self.path == '/horde_model_status':
+           print("test horde_model_status GET")
+           self.send_response(200)
+           #content_length1 = int(self.headers['Content-Length'])
+           #post_data1 = self.rfile.read(content_length1)
+           #data1 = json.loads(post_data1.decode('utf-8'), strict=False)
+
+           print('sending horde request')
+           #headers77 = {"apikey": key1, "type": "text", "model_state": "all"}
+           headers77 = {"apikey": key1}
+
+           params77 = {"type": "text", "model_state": "all"}
+
+           x49 = requests.get(url3, params = params77, headers = headers77)
+           results000 = x49.json()
+           print("Horde model status: " + str(results000))
+
+           self.send_response(x49.status_code)
+           self.send_header('Content-Type', 'application/json')
+           self.end_headers()
+           self.wfile.write(json.dumps(x49.json()).encode('utf-8'))
+
+
+
         elif self.path == '/voiceselevenlabs':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
